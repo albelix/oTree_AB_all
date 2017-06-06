@@ -49,12 +49,12 @@ class Subsession(BaseSubsession):
                 p.participant.vars['reformed_this_round'] = 0
                 p.participant.vars['reformed_previous_round'] = 0
                 p.participant.vars['called_to_be_reformed'] = 0
-            self.session.vars['overthrow'] = 0 # if no reform, 1 if took place, 2 if final reform reversal
-            self.session.vars['overthrow_round'] = 0
-            self.session.vars['coordinated_reforms'] = 0
-            self.session.vars['total_approvals'] = 0
-            self.session.vars['total_approvals_previous_round'] = 0
-            self.session.vars['num_approved_reforms'] = 0
+            self.subsession.vars['overthrow'] = 0 # if no reform, 1 if took place, 2 if final reform reversal
+            self.subsession.vars['overthrow_round'] = 0
+            self.subsession.vars['coordinated_reforms'] = 0
+            self.subsession.vars['total_approvals'] = 0
+            self.subsession.vars['total_approvals_previous_round'] = 0
+            self.subsession.vars['num_approved_reforms'] = 0
 
 
 class Group(BaseGroup):
@@ -103,16 +103,16 @@ class Group(BaseGroup):
 
     def adding_reforms(self):
         for p in self.get_players():
-            if p.participant.vars['reformed_this_round'] == 1 and self.session.vars['total_approvals'] >= 3:
+            if p.participant.vars['reformed_this_round'] == 1 and self.subsession.vars['total_approvals'] >= 3:
                 p.participant.vars['reforms'] += 1
         print("******p.participant.vars['reforms']", p.participant.vars['reforms'])
-        if self.session.vars['total_approvals'] >= 3:
-            self.session.vars['num_approved_reforms'] += 1
+        if self.subsession.vars['total_approvals'] >= 3:
+            self.subsession.vars['num_approved_reforms'] += 1
 
     # counting approvals for the government to give according solidarity benefits to everybody
     current_round_reform_approved = True
     def approvals(self):
-        self.session.vars['total_approvals'] = sum(p.approval for p in self.get_players())
+        self.subsession.vars['total_approvals'] = sum(p.approval for p in self.get_players())
         if sum(p.approval for p in self.get_players()) < 3:
             self.current_round_reform_approved = False
 
@@ -121,9 +121,9 @@ class Group(BaseGroup):
 
     # sums up players votes for overthrow and switches regime, if necessary
     def total_votes_for_overthrow(self):
-        if sum(p.vote_to_overthrow for p in self.get_players()) >= Constants.points_to_overthrow and self.session.vars['overthrow'] == 0:
-            self.session.vars['overthrow'] = 1 #never takes place under current settings
-            self.session.vars['overthrow_round'] = self.subsession.round_number
+        if sum(p.vote_to_overthrow for p in self.get_players()) >= Constants.points_to_overthrow and self.subsession.vars['overthrow'] == 0:
+            self.subsession.vars['overthrow'] = 1 #never takes place under current settings
+            self.subsession.vars['overthrow_round'] = self.subsession.round_number
             # chaos loses or something
             for p in self.get_players():
                 p.payoff -= Constants.losses_from_overthrow
@@ -132,7 +132,7 @@ class Group(BaseGroup):
 
     def final_decision(self):
         if sum(p.approval_final for p in self.get_players()) < 3:
-            self.session.vars['overthrow'] = 2 #meaning reversal of all reform decisions
+            self.subsession.vars['overthrow'] = 2 #meaning reversal of all reform decisions
 
     reforms_votes_group = []
     # aggregate proposed number of reforms (after overthrow mechanic)
@@ -152,10 +152,10 @@ class Group(BaseGroup):
             p.payoff = \
                 Constants.base_sales \
                 - ( p.participant.vars['reforms'] * Constants.reform_penalty ) \
-                + (( self.session.vars['num_approved_reforms'] - p.participant.vars['reforms'] ) * Constants.reform_benefits)
+                + (( self.subsession.vars['num_approved_reforms'] - p.participant.vars['reforms'] ) * Constants.reform_benefits)
             print("********payoffs********")
             print("- ( p.participant.vars['reforms'] * Constants.reform_penalty )", ( p.participant.vars['reforms'] * Constants.reform_penalty ))
-            print("( self.session.vars['num_approved_reforms'] - p.participant.vars['reforms'] )", ( self.session.vars['num_approved_reforms'] - p.participant.vars['reforms'] ))
+            print("( self.group.vars['num_approved_reforms'] - p.participant.vars['reforms'] )", ( self.subsession.vars['num_approved_reforms'] - p.participant.vars['reforms'] ))
                     #+ Constants.base_consumption \
                     #- ( p.approval * Constants.approval_cost ) \
                     #+ Constants.solidarity_benefits[self.approvals()]
